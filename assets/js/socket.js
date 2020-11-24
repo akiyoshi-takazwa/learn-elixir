@@ -55,9 +55,26 @@ let socket = new Socket("/socket", {params: {token: window.userToken}})
 socket.connect()
 
 // Now that you are connected, you can join channels with a topic:
-let channel = socket.channel("topic:subtopic", {})
+let channel = socket.channel("room:lobby", {});
+
+const chatInput = document.querySelector('#chat-input');
+const messagesContainer = document.querySelector('#messages');
+
+chatInput.addEventListener('keypress', (event) => {
+  if (event.keyCode === 13) {
+    channel.push('new_msg', { body: chatInput.value });
+    chatInput.value = '';
+  }
+});
+channel.on('new_msg', (payload) => {
+  const messageItem = document.createElement('li');
+  messageItem.innerText = `[${Date()}] ${payload.body}`;
+  messagesContainer.appendChild(messageItem);
+});
+
 channel.join()
   .receive("ok", resp => { console.log("Joined successfully", resp) })
   .receive("error", resp => { console.log("Unable to join", resp) })
+
 
 export default socket
