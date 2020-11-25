@@ -1,0 +1,48 @@
+version: '2'
+services:
+
+    app:
+        build: .
+        container_name: phoenix-template-app
+        expose:
+            - 4000
+        ports:
+            - "4000:4000"
+        privileged: true
+        mem_reservation: 512m
+        volumes:
+            - ".:/app"
+        links:
+            - mysql
+            - redis
+        environment:
+            - "TZ=Asia/Tokyo"
+            - "MIX_ENV=dev"
+        # 毎回環境リセットする版
+        command: ["/bin/sh", "-c", "sysctl vm.overcommit_memory=1 && mix deps.get && mix compile --long-compilation-threshold 60 && elixir --sname app-node --cookie app -S mix phx.server"]
+        # command: ["/bin/sh", "-c", "sysctl vm.overcommit_memory=1 && elixir --sname app-node --cookie app -S mix phx.server"]
+
+    redis:
+        image: redis:alpine
+        container_name: phoenix-template-redis
+        hostname: redis
+
+    mysql:
+        image: mysql:8.0
+        container_name: phoenix-template-mysql
+        hostname: mysql
+        expose:
+            - 3306
+        ports:
+            - "3306:3306"
+        command: >
+            mysqld
+                --character-set-server=utf8
+                --collation-server=utf8_unicode_ci
+                --skip-character-set-client-handshake
+                --sql_mode=
+                --default-authentication-plugin=mysql_native_password
+        environment:
+            - "MYSQL_ROOT_PASSWORD=root"
+            - "MYSQL_DATABASE=phoenix"
+            - "MYSQL_USER=root"
